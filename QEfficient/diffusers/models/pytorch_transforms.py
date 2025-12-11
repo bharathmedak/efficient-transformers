@@ -4,56 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # -----------------------------------------------------------------------------
-
-from diffusers.models.normalization import AdaLayerNormContinuous, AdaLayerNormZero, AdaLayerNormZeroSingle, RMSNorm
-from diffusers.models.transformers.transformer_flux import (
-    FluxAttention,
-    FluxAttnProcessor,
-    FluxSingleTransformerBlock,
-    FluxTransformer2DModel,
-    FluxTransformerBlock,
-)
-from torch import nn
-
-from QEfficient.base.pytorch_transforms import ModuleMappingTransform
-from QEfficient.customop.rms_norm import CustomRMSNormAIC
-from QEfficient.diffusers.models.normalization import (
-    QEffAdaLayerNormContinuous,
-    QEffAdaLayerNormZero,
-    QEffAdaLayerNormZeroSingle,
-)
-from QEfficient.diffusers.models.transformers.transformer_flux import (
-    QEffFluxAttention,
-    QEffFluxAttnProcessor,
-    QEffFluxSingleTransformerBlock,
-    QEffFluxTransformer2DModel,
-    QEffFluxTransformerBlock,
-)
-
-
-class CustomOpsTransform(ModuleMappingTransform):
-    _module_mapping = {
-        RMSNorm: CustomRMSNormAIC,
-        nn.RMSNorm: CustomRMSNormAIC,  #  for torch.nn.RMSNorm
-    }
-
-
-class AttentionTransform(ModuleMappingTransform):
-    _module_mapping = {
-        FluxSingleTransformerBlock: QEffFluxSingleTransformerBlock,
-        FluxTransformerBlock: QEffFluxTransformerBlock,
-        FluxTransformer2DModel: QEffFluxTransformer2DModel,
-        FluxAttention: QEffFluxAttention,
-        FluxAttnProcessor: QEffFluxAttnProcessor,
-    }
-
-
-class NormalizationTransform(ModuleMappingTransform):
-    _module_mapping = {
-        AdaLayerNormZero: QEffAdaLayerNormZero,
-        AdaLayerNormZeroSingle: QEffAdaLayerNormZeroSingle,
-        AdaLayerNormContinuous: QEffAdaLayerNormContinuous,
-    }
 from typing import Tuple
 
 from diffusers.models.attention import JointTransformerBlock
@@ -69,6 +19,7 @@ from diffusers.models.transformers.transformer_flux import (
 from diffusers.models.transformers.transformer_qwenimage import (
     QwenDoubleStreamAttnProcessor2_0,
     QwenImageTransformer2DModel,
+    QwenImageTransformerBlock,
 )
 from torch import nn
 
@@ -95,6 +46,7 @@ from QEfficient.diffusers.models.transformers.transformer_flux import (
 from QEfficient.diffusers.models.transformers.transformer_qwenimage import (
     QEffQwenDoubleStreamAttnProcessor2_0,
     QEffQwenImageTransformer2DModel,
+    QEffQwenImageTransformerBlock,
 )
 
 
@@ -122,6 +74,7 @@ class AttentionTransform(ModuleMappingTransform):
         FluxAttnProcessor: QEffFluxAttnProcessor,
         QwenImageTransformer2DModel: QEffQwenImageTransformer2DModel,
         QwenDoubleStreamAttnProcessor2_0: QEffQwenDoubleStreamAttnProcessor2_0,
+        QwenImageTransformerBlock: QEffQwenImageTransformerBlock,
     }
 
     @classmethod
