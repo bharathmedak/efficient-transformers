@@ -6,7 +6,8 @@
 # -----------------------------------------------------------------------------
 from typing import Tuple
 
-from diffusers.models.attention import JointTransformerBlock
+from diffusers.models.activations import GELU
+from diffusers.models.attention import FeedForward, JointTransformerBlock
 from diffusers.models.attention_processor import Attention, JointAttnProcessor2_0
 from diffusers.models.normalization import AdaLayerNormContinuous, AdaLayerNormZero, AdaLayerNormZeroSingle, RMSNorm
 from diffusers.models.transformers.transformer_flux import (
@@ -25,7 +26,8 @@ from torch import nn
 
 from QEfficient.base.pytorch_transforms import ModuleMappingTransform
 from QEfficient.customop.rms_norm import CustomRMSNormAIC
-from QEfficient.diffusers.models.attention import QEffJointTransformerBlock
+from QEfficient.diffusers.models.activations import QEffGELUScale
+from QEfficient.diffusers.models.attention import QEffFeedForward, QEffJointTransformerBlock
 from QEfficient.diffusers.models.attention_processor import (
     QEffAttention,
     QEffJointAttnProcessor2_0,
@@ -75,6 +77,7 @@ class AttentionTransform(ModuleMappingTransform):
         QwenImageTransformer2DModel: QEffQwenImageTransformer2DModel,
         QwenDoubleStreamAttnProcessor2_0: QEffQwenDoubleStreamAttnProcessor2_0,
         QwenImageTransformerBlock: QEffQwenImageTransformerBlock,
+        FeedForward: QEffFeedForward,
     }
 
     @classmethod
@@ -98,6 +101,15 @@ class NormalizationTransform(ModuleMappingTransform):
 
 class OnnxFunctionTransform(ModuleMappingTransform):
     _module_mapping = {QEffFluxTransformer2DModel, QEffFluxTransformer2DModelOF, QEffQwenImageTransformer2DModel}
+
+    @classmethod
+    def apply(cls, model: nn.Module) -> Tuple[nn.Module, bool]:
+        model, transformed = super().apply(model)
+        return model, transformed
+
+
+class ActivationsTransform(ModuleMappingTransform):
+    _module_mapping = {GELU: QEffGELUScale}
 
     @classmethod
     def apply(cls, model: nn.Module) -> Tuple[nn.Module, bool]:

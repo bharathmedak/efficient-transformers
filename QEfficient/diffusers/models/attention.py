@@ -6,7 +6,9 @@
 # ----------------------------------------------------------------------------
 
 import torch
-from diffusers.models.attention import JointTransformerBlock, _chunked_feed_forward
+from diffusers.models.activations import GELU
+from diffusers.models.attention import FeedForward, JointTransformerBlock, _chunked_feed_forward
+from torch import nn
 
 
 class QEffJointTransformerBlock(JointTransformerBlock):
@@ -73,3 +75,18 @@ class QEffJointTransformerBlock(JointTransformerBlock):
             encoder_hidden_states = encoder_hidden_states + c_gate_mlp.unsqueeze(1) * context_ff_output
 
         return encoder_hidden_states, hidden_states
+
+
+class QEffFeedForward(FeedForward):
+    def forward(self, hidden_states: torch.Tensor, *args, **kwargs) -> torch.Tensor:
+        hidden_states = hidden_states * kwargs["scale"]
+        for module in self.net:
+            if isinstance(module, nn.Linear):
+                hidden_states = hidden_states / kwargs["scale"]
+                module.bias = torch.nn.Parameter(module.bias / kwargs["scale"])
+                hidden_states = module(hidden_states)
+            elif isinstance(module, GELU):
+                hidden_states = module(hidden_states, scale=kwargs["scale"])
+            else:
+                hidden_states = module(hidden_states)
+        return hidden_states
